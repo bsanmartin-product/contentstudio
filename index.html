@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Voxai — Content Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#04342C;--brand2:#1D9E75;--brand3:#5DCAA5;
+  --bg:#fff;--bg2:#f7f6f3;--bg3:#f0efe9;
+  --text:#1a1a18;--text2:#6b6a64;--text3:#9c9a92;
+  --border:rgba(0,0,0,0.11);--border2:rgba(0,0,0,0.22);
+  --accent:#04342C;--accent-fg:#fff;
+  --green:#0F6E56;--green-bg:#E1F5EE;
+  --blue:#0c447c;--blue-bg:#e6f1fb;
+  --r:8px;--rl:12px
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#242422;--bg3:#1a1a18;
+  --text:#e8e6de;--text2:#9c9a92;--text3:#6b6a64;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.2);
+  --accent:#5DCAA5;--accent-fg:#04342C;
+  --green:#5DCAA5;--green-bg:#04342C;
+  --blue:#85b7eb;--blue-bg:#042c53
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--green)}
+.main-content{flex:1}
+/* HEADER */
+.topbar{background:var(--brand);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.logo-svg{height:36px;width:auto}
+.model-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.model-bar label{font-size:11px;color:rgba(255,255,255,0.6);white-space:nowrap}
+.model-bar select{font-size:12px;padding:5px 8px;border:0.5px solid rgba(255,255,255,0.2);border-radius:var(--r);background:rgba(255,255,255,0.1);color:#fff;outline:none;cursor:pointer;font-family:inherit}
+.model-bar select option{background:#1a1a18;color:#e8e6de}
+.pbadge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;background:var(--brand3);color:var(--brand)}
+/* PROFILE BAR */
+.profile-bar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.profile-bar label{font-size:12px;color:var(--text2);white-space:nowrap}
+.profile-bar select{font-size:13px;padding:5px 10px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--bg2);color:var(--text);outline:none;cursor:pointer;font-family:inherit;max-width:280px}
+.profile-pill{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--green-bg);color:var(--green);font-weight:500}
+.profile-edit-btn{font-size:12px;color:var(--text2);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+/* LAYOUT */
+.wrap{max-width:1020px;margin:0 auto;padding:20px 16px}
+.layout{display:grid;grid-template-columns:210px 1fr;gap:14px;align-items:start}
+@media(max-width:660px){.layout{grid-template-columns:1fr}}
+/* SIDEBAR */
+.sidebar{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:10px;position:sticky;top:16px}
+.s-title{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;padding:8px 8px 3px;margin-top:4px;text-transform:uppercase}
+.nb{display:flex;align-items:center;gap:7px;width:100%;padding:7px 9px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);text-align:left;transition:all .12s;font-family:inherit}
+.nb:hover{background:var(--bg2);color:var(--text)}
+.nb.active{background:var(--green-bg);color:var(--green);font-weight:500}
+.ni{width:17px;text-align:center;font-size:13px}
+.ctx-pill{font-size:11px;margin-top:10px;padding:5px 8px;border-radius:var(--r);background:var(--bg2);color:var(--text2);text-align:center;line-height:1.5}
+.ctx-pill.on{color:var(--green);background:var(--green-bg)}
+/* CARD / PANEL */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:20px}
+.panel{display:none}.panel.active{display:block}
+.ptitle{font-size:15px;font-weight:600;margin-bottom:4px}
+.psubtitle{font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+/* FORMS */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+@media(max-width:500px){.fg{grid-template-columns:1fr}}
+.fi{display:flex;flex-direction:column;gap:4px}
+.fi.full{grid-column:1/-1}
+label{font-size:12px;font-weight:500;color:var(--text2)}
+select,textarea,input[type=text],input[type=password]{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--bg2);color:var(--text);font-family:inherit;outline:none;transition:border-color .12s}
+select:focus,textarea:focus,input:focus{border-color:var(--green)}
+textarea{resize:vertical;line-height:1.6}
+.hint{font-size:11px;color:var(--text3);text-align:right;margin-top:2px}
+/* FACTS BOX */
+.facts-box{background:var(--green-bg);border:0.5px solid var(--brand3);border-radius:var(--rl);padding:14px;margin-bottom:14px}
+.facts-box h4{font-size:12px;font-weight:600;color:var(--green);margin-bottom:6px}
+.facts-box p{font-size:11px;color:var(--green);margin-bottom:10px;line-height:1.5;opacity:.85}
+.facts-box textarea{background:rgba(255,255,255,0.7);border-color:rgba(29,158,117,0.3);min-height:80px}
+@media(prefers-color-scheme:dark){.facts-box textarea{background:rgba(4,52,44,0.5)}}
+/* BTNS */
+.brow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{padding:8px 15px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-weight:500;border-radius:var(--r);cursor:pointer;transition:all .12s;font-family:inherit}
+.btn:hover{background:var(--bg2)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-p{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn-p:hover{opacity:.85;background:var(--accent)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-g{border-color:var(--border);color:var(--text2)}.btn-g:hover{color:var(--text)}
+/* LOADING */
+.lbar{margin:12px 0;display:none}.lbar.on{display:block}
+.lmsg{font-size:12px;color:var(--text2);margin-bottom:5px}
+.ltrack{height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.lfill{height:100%;background:var(--green);animation:ld 1.8s ease-in-out infinite}
+@keyframes ld{0%{width:0%;margin-left:0}50%{width:55%;margin-left:20%}100%{width:0%;margin-left:100%}}
+/* RESULTS */
+.results{margin-top:14px}
+.vc{border:0.5px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
+.vh{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--bg2);border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:6px}
+.vlabel{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.05em}
+.vacts{display:flex;gap:5px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--green-bg);color:var(--green);border:0.5px solid var(--brand3)}
+.vbody{padding:14px}
+.vtext{font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap}
+.vtext[contenteditable=true]{outline:none;border:0.5px solid var(--green);border-radius:6px;padding:8px;background:var(--green-bg)}
+/* IMAGE */
+.img-section{border-top:0.5px solid var(--border)}
+.img-head{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--bg2);flex-wrap:wrap;gap:6px}
+.img-head span{font-size:12px;font-weight:500;color:var(--text2)}
+.img-body{padding:13px}
+.prompt-edit{width:100%;font-size:12px;padding:7px 10px;border:0.5px solid var(--border);border-radius:var(--r);background:var(--bg2);color:var(--text);font-family:inherit;resize:vertical;min-height:52px;margin-bottom:8px;outline:none}
+.img-placeholder{height:140px;background:var(--bg2);border:0.5px dashed var(--border2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);text-align:center;padding:12px}
+.img-wrap img{max-width:100%;border-radius:var(--r);border:0.5px solid var(--border);display:block}
+/* CONFIG */
+.sblock{border:0.5px solid var(--border);border-radius:var(--rl);padding:15px;margin-bottom:14px}
+.sblock h3{font-size:13px;font-weight:600;margin-bottom:4px}
+.sblock p{font-size:12px;color:var(--text2);margin-bottom:11px;line-height:1.5}
+.krow{display:flex;gap:8px;align-items:center;margin-bottom:9px}.krow input{flex:1}
+.ks{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border);white-space:nowrap}
+.ks.ok{background:var(--green-bg);color:var(--green)}
+/* DOCS */
+.doc-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:6px;background:var(--bg2);font-size:12px}
+.doc-name{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.doc-meta{color:var(--text2);font-size:11px}
+.doc-rm{border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:15px;padding:0 4px;line-height:1}
+.doc-rm:hover{color:var(--text)}
+.upzone{border:1px dashed var(--border2);border-radius:var(--rl);padding:18px;text-align:center;cursor:pointer;transition:background .12s;margin-bottom:10px}
+.upzone:hover{background:var(--bg2)}.upzone input{display:none}
+.uico{font-size:22px;margin-bottom:5px}
+.upzone p{font-size:12px;color:var(--text2);line-height:1.5}
+.ctx-preview{font-size:11px;color:var(--text2);background:var(--bg2);border-radius:var(--r);padding:8px 10px;max-height:80px;overflow:hidden;line-height:1.5;margin-top:8px;white-space:pre-wrap}
+/* PROFILES */
+.profile-card{border:0.5px solid var(--border);border-radius:var(--rl);padding:14px;margin-bottom:12px;cursor:pointer;transition:all .12s}
+.profile-card:hover{border-color:var(--green);background:var(--green-bg)}
+.profile-card.selected{border-color:var(--green);background:var(--green-bg)}
+.profile-card-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.profile-card-desc{font-size:12px;color:var(--text2)}
+/* HISTORY */
+.hi{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:0.5px solid var(--border);border-radius:var(--rl);margin-bottom:7px;cursor:pointer;transition:background .12s}
+.hi:hover{background:var(--bg2)}
+.hdot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:var(--text3)}
+.hdot.linkedin{background:#0A66C2}.hdot.email{background:#1D9E75}.hdot.newsletter{background:#7F77DD}
+.hmeta{font-size:11px;color:var(--text2);margin-bottom:3px}
+.hprev{font-size:12px;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.empty{text-align:center;padding:36px 20px;color:var(--text2);font-size:13px;line-height:1.6}
+/* GUIDE */
+.gblock{background:var(--bg2);border-radius:var(--rl);padding:14px;margin-bottom:13px}
+.gblock h3{font-size:13px;font-weight:600;margin-bottom:9px}
+.gblock ol,.gblock ul{padding-left:16px;font-size:12px;color:var(--text2);line-height:2.1}
+.gblock li strong{color:var(--text)}
+.tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:4px;background:var(--green-bg);color:var(--green);margin:2px}
+.tip-box{background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green);line-height:1.6}
+/* FOOTER */
+footer{background:var(--brand);color:rgba(255,255,255,0.55);font-size:11px;padding:24px;margin-top:40px}
+footer .footer-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+footer .footer-brand{font-size:13px;font-weight:600;color:#fff}
+footer .footer-by{font-size:11px;color:var(--brand3)}
+footer .footer-links{display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:rgba(255,255,255,0.5);text-decoration:none}
+footer a:hover{color:var(--brand3)}
+footer .footer-disclaimer{line-height:1.7;border-top:0.5px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--bg);border-radius:var(--rl);padding:24px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);margin-top:-4px}
+</style>
+</head>
+<body>
+<div class="main-content">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <svg class="logo-svg" viewBox="0 0 220 72" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(28,36)">
+      <polygon points="0,-20 17,-10 17,10 0,20 -17,10 -17,-10" fill="none" stroke="#1D9E75" stroke-width="1.5"/>
+      <polygon points="0,-11 9,0 0,11 -9,0" fill="#5DCAA5"/>
+      <circle cx="0" cy="-20" r="2" fill="#5DCAA5"/>
+      <circle cx="17" cy="-10" r="2" fill="#5DCAA5"/>
+      <circle cx="17" cy="10" r="2" fill="#5DCAA5"/>
+      <circle cx="0" cy="20" r="2" fill="#5DCAA5"/>
+      <circle cx="-17" cy="10" r="2" fill="#5DCAA5"/>
+      <circle cx="-17" cy="-10" r="2" fill="#5DCAA5"/>
+    </g>
+    <text font-family="'Helvetica Neue',Arial,sans-serif" font-weight="500" font-size="30" x="58" y="43">
+      <tspan fill="white">Vox</tspan><tspan fill="#5DCAA5">ai</tspan>
+    </text>
+  </svg>
+  <div class="model-bar">
+    <label>Proveedor:</label>
+    <select id="gprovider" onchange="updateSubmodels()">
+      <option value="claude">Claude — Anthropic</option>
+      <option value="openai">GPT — OpenAI</option>
+      <option value="gemini">Gemini — Google</option>
+      <option value="groq">Groq — Gratuito ✓</option>
+    </select>
+    <label>Modelo:</label>
+    <select id="gmodel"></select>
+    <span class="pbadge" id="provider-badge">Anthropic</span>
+  </div>
+</div>
+
+<!-- PROFILE BAR -->
+<div class="profile-bar">
+  <label>Perfil activo:</label>
+  <select id="active-profile" onchange="switchProfile()">
+    <option value="">— Sin perfil —</option>
+  </select>
+  <span class="profile-pill" id="profile-pill" style="display:none">Perfil cargado ✓</span>
+  <button class="profile-edit-btn" onclick="showPanel('profiles', document.querySelectorAll('.nb')[7])">Gestionar perfiles</button>
+</div>
+
+<div class="wrap">
+  <div class="layout">
+    <div class="sidebar">
+      <div class="s-title">Generar</div>
+      <button class="nb active" onclick="showPanel('linkedin',this)"><span class="ni">in</span>LinkedIn</button>
+      <button class="nb" onclick="showPanel('email',this)"><span class="ni">@</span>Email</button>
+      <button class="nb" onclick="showPanel('newsletter',this)"><span class="ni">✉</span>Newsletter</button>
+      <div class="s-title">Contexto</div>
+      <button class="nb" onclick="showPanel('profiles',this)"><span class="ni">👤</span>Perfiles</button>
+      <button class="nb" onclick="showPanel('docs',this)"><span class="ni">📁</span>Documentos</button>
+      <button class="nb" onclick="showPanel('style',this)"><span class="ni">✍</span>Estilo</button>
+      <div class="s-title">Gestión</div>
+      <button class="nb" onclick="showPanel('history',this)"><span class="ni">↺</span>Historial</button>
+      <button class="nb" onclick="showPanel('config',this)"><span class="ni">⚙</span>Config</button>
+      <button class="nb" onclick="showPanel('guide',this)"><span class="ni">?</span>Ayuda</button>
+      <div class="ctx-pill" id="ctx-pill">Sin contexto cargado</div>
+    </div>
+
+    <div class="card">
+
+      <!-- LINKEDIN -->
+      <div class="panel active" id="panel-linkedin">
+        <div class="ptitle">Post de LinkedIn</div>
+        <div class="psubtitle">Cuanto más concreto seas en "Hechos y datos reales", más específico y valioso será el resultado.</div>
+
+        <div class="facts-box">
+          <h4>✦ Hechos y datos reales del post</h4>
+          <p>Contá qué pasó exactamente: personas involucradas, números concretos, fechas, resultados medibles, anécdotas reales, frases que dijiste o escuchaste. La IA convierte estos datos en contenido — no puede inventarlos.</p>
+          <textarea id="li-facts" rows="5" placeholder="Ej: Usé Claude para redactar los PRDs de 3 features en Q1. Antes me llevaba 4hs cada uno, ahora 45min. La clave fue crear un template con el contexto del producto. El equipo de dev me dijo que por primera vez entendían los criterios de aceptación sin preguntar. Lanzamos las 3 features sin re-trabajo..."></textarea>
+        </div>
+
+        <div class="fg">
+          <div class="fi"><label>Tono</label><select id="li-tone"><option>Profesional y cercano</option><option>Formal y ejecutivo</option><option>Casual e inspirador</option><option>Educativo — enseñar algo</option><option>Provocador — cuestionar algo</option><option>Reflexivo — compartir aprendizaje</option></select></div>
+          <div class="fi"><label>Objetivo</label><select id="li-goal"><option>Generar debate / comentarios</option><option>Posicionarse como referente</option><option>Promocionar producto/servicio</option><option>Anunciar novedad</option><option>Compartir aprendizaje personal</option><option>Dar valor educativo al lector</option></select></div>
+          <div class="fi"><label>Longitud</label><select id="li-len"><option value="corto (100-150 palabras)">Corto (100-150 palabras)</option><option value="medio (200-300 palabras)" selected>Medio (200-300 palabras)</option><option value="largo (400-550 palabras)">Largo (400-550 palabras)</option><option value="muy largo (600-900 palabras)">Muy largo (600-900 palabras)</option></select></div>
+          <div class="fi"><label>Profundidad</label><select id="li-depth"><option value="superficial — solo el mensaje clave">Superficial — mensaje clave</option><option value="moderada — contexto + argumento principal" selected>Moderada — contexto + argumento</option><option value="profunda — datos, ejemplos, historia completa">Profunda — datos + historia</option><option value="muy profunda — análisis detallado con múltiples ángulos">Muy profunda — análisis completo</option></select></div>
+          <div class="fi"><label>Estructura</label><select id="li-struct"><option value="gancho fuerte + desarrollo + CTA o pregunta">Gancho + desarrollo + CTA</option><option value="historia personal con inicio tensión y resolución + lección">Historia personal + lección</option><option value="problema que todos enfrentan + solución + CTA">Problema + solución + CTA</option><option value="lista numerada de puntos accionables">Lista numerada</option><option value="dato o estadística sorprendente + por qué importa + reflexión">Dato sorprendente + reflexión</option><option value="pregunta provocadora + respuesta desarrollada + invitación">Pregunta provocadora</option></select></div>
+          <div class="fi"><label>Emojis</label><select id="li-emoji"><option value="sin emojis">Sin emojis</option><option value="muy pocos emojis (1-2 estratégicos)" selected>Muy pocos (1-2)</option><option value="emojis moderados en puntos clave">Moderados</option><option value="muchos emojis expresivos">Muchos</option></select></div>
+          <div class="fi"><label>Hashtags</label><select id="li-hash"><option value="sin hashtags">Sin hashtags</option><option value="3 hashtags muy relevantes al final" selected>3 al final</option><option value="5 hashtags relevantes al final">5 al final</option><option value="hashtags integrados en el texto">Integrados en el texto</option></select></div>
+          <div class="fi"><label>Variantes</label><select id="li-var"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+          <div class="fi full"><label>Instrucciones adicionales (opcional)</label><textarea id="li-extra" rows="2" placeholder="Ej: Mencioná que somos 5 en el equipo. Evitá sonar arrogante. Terminá con una pregunta abierta al lector. No uses la palabra 'sinergia'."></textarea></div>
+        </div>
+        <div class="brow"><button class="btn btn-p" id="li-btn" onclick="generate('linkedin')">Generar posts ↗</button><button class="btn btn-g btn-sm" onclick="clearR('li')">Limpiar</button></div>
+        <div class="lbar" id="li-lb"><div class="lmsg" id="li-lm">Generando...</div><div class="ltrack"><div class="lfill"></div></div></div>
+        <div class="results" id="li-results"></div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="panel" id="panel-email">
+        <div class="ptitle">Email / Mailing</div>
+        <div class="psubtitle">Incluí detalles reales: a quién va dirigido, qué ofrecés exactamente, qué querés que haga el lector.</div>
+
+        <div class="facts-box">
+          <h4>✦ Contexto real del email</h4>
+          <p>¿A quién va? ¿Qué problema resuelve tu propuesta? ¿Hay una oferta concreta, un evento, una fecha límite? Datos reales = emails que convierten.</p>
+          <textarea id="em-facts" rows="4" placeholder="Ej: Va a gerentes de operaciones de empresas de +50 empleados. El webinar es el 15 de mayo a las 18hs, dura 1 hora, lo da nuestra CTO María García. Hay 30 cupos. Ya confirmaron 3 empresas conocidas. El link de registro es forms.gle/..."></textarea>
+        </div>
+
+        <div class="fg">
+          <div class="fi"><label>Tono</label><select id="em-tone"><option>Profesional y cálido</option><option>Formal y corporativo</option><option>Urgente — CTA fuerte</option><option>Educativo — aportando valor</option><option>Cercano — casi conversacional</option></select></div>
+          <div class="fi"><label>Tipo</label><select id="em-type"><option>Prospección en frío</option><option>Follow-up</option><option>Promocional</option><option>Bienvenida</option><option>Reactivación</option><option>Invitación a evento</option><option>Upsell / cross-sell</option></select></div>
+          <div class="fi"><label>Longitud del cuerpo</label><select id="em-len"><option value="muy corto (60-80 palabras)">Muy corto (60-80 palabras)</option><option value="corto (100-140 palabras)" selected>Corto (100-140 palabras)</option><option value="medio (180-250 palabras)">Medio (180-250 palabras)</option><option value="largo (300-400 palabras)">Largo (300-400 palabras)</option></select></div>
+          <div class="fi"><label>Personalización</label><select id="em-pers"><option value="genérico para lista masiva">Genérico</option><option value="semi-personalizado con [NOMBRE] y [EMPRESA]" selected>Semi-personalizado</option><option value="muy personalizado con contexto específico del destinatario">Muy personalizado</option></select></div>
+          <div class="fi"><label>Variantes</label><select id="em-var"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></div>
+          <div class="fi full"><label>Instrucciones adicionales (opcional)</label><textarea id="em-extra" rows="2" placeholder="Ej: El CTA va a un formulario de Google. El asunto no debe superar 50 caracteres. Evitá palabras que activan filtros de spam como 'GRATIS' o 'URGENTE'."></textarea></div>
+        </div>
+        <div class="brow"><button class="btn btn-p" id="em-btn" onclick="generate('email')">Generar emails ↗</button><button class="btn btn-g btn-sm" onclick="clearR('em')">Limpiar</button></div>
+        <div class="lbar" id="em-lb"><div class="lmsg" id="em-lm">Generando...</div><div class="ltrack"><div class="lfill"></div></div></div>
+        <div class="results" id="em-results"></div>
+      </div>
+
+      <!-- NEWSLETTER -->
+      <div class="panel" id="panel-newsletter">
+        <div class="ptitle">Newsletter</div>
+        <div class="psubtitle">Incluí el ángulo editorial que querés tomar, no solo el tema. ¿Cuál es tu postura? ¿Qué querés que piense el lector al terminar?</div>
+
+        <div class="facts-box">
+          <h4>✦ Ángulo editorial y datos concretos</h4>
+          <p>¿Qué pasó esta semana que dispara el tema? ¿Tenés datos, ejemplos o casos reales? ¿Cuál es tu opinión o postura? La newsletter que enseña algo específico siempre gana a la que habla de temas genéricos.</p>
+          <textarea id="nl-facts" rows="4" placeholder="Ej: Esta semana OpenAI lanzó o3 y todos hablan de que va a reemplazar programadores. Mi postura: el riesgo real no es para los devs sino para los PMs que no sepan prompt engineering. Tengo 3 ejemplos concretos de mi equipo donde esto ya está pasando..."></textarea>
+        </div>
+
+        <div class="fg">
+          <div class="fi"><label>Tono editorial</label><select id="nl-tone"><option>Informativo — enseñar algo útil</option><option>Editorial — opinión con argumento</option><option>Curador — lo mejor de la semana</option><option>Técnico — profundidad especializada</option><option>Dinámico y entretenido</option></select></div>
+          <div class="fi"><label>Estructura</label><select id="nl-struct"><option>Intro + desarrollo + tip accionable + cierre</option><option>Artículo de fondo con un solo tema</option><option>Resumen ejecutivo — 5 puntos clave</option><option>Curación comentada — 5 links con contexto</option><option>Historia + datos + lección + pregunta</option></select></div>
+          <div class="fi"><label>Extensión</label><select id="nl-len"><option value="breve (200-300 palabras)">Breve (200-300)</option><option value="media (400-600 palabras)" selected>Media (400-600)</option><option value="larga (700-900 palabras)">Larga (700-900)</option><option value="muy larga (1000-1500 palabras)">Muy larga (1000-1500)</option></select></div>
+          <div class="fi"><label>Profundidad</label><select id="nl-depth"><option value="superficial — titulares y resúmenes breves">Superficial — titulares</option><option value="moderada — contexto y análisis breve" selected>Moderada — contexto + análisis</option><option value="profunda — análisis, ejemplos concretos y opinión editorial">Profunda — análisis + opinión</option></select></div>
+          <div class="fi"><label>Variantes</label><select id="nl-var"><option value="1" selected>1</option><option value="2">2</option></select></div>
+          <div class="fi full"><label>Instrucciones adicionales (opcional)</label><textarea id="nl-extra" rows="2" placeholder="Ej: Terminá con una pregunta a los lectores. Incluí un recurso gratuito. El sujeto del mail no debe revelar todo el contenido."></textarea></div>
+        </div>
+        <div class="brow"><button class="btn btn-p" id="nl-btn" onclick="generate('newsletter')">Generar newsletter ↗</button><button class="btn btn-g btn-sm" onclick="clearR('nl')">Limpiar</button></div>
+        <div class="lbar" id="nl-lb"><div class="lmsg" id="nl-lm">Generando...</div><div class="ltrack"><div class="lfill"></div></div></div>
+        <div class="results" id="nl-results"></div>
+      </div>
+
+      <!-- PROFILES -->
+      <div class="panel" id="panel-profiles">
+        <div class="ptitle">Perfiles de voz</div>
+        <div class="psubtitle">Creá perfiles distintos para tu marca personal, tu empresa u otros proyectos. Cada perfil tiene su propia voz, tono e industria.</div>
+        <div id="profiles-list"></div>
+        <div class="sblock">
+          <h3>Crear / editar perfil</h3>
+          <p>Completá con la mayor honestidad posible — esto es lo que le "enseñás" a la IA sobre quién sos y cómo hablás.</p>
+          <div class="fg">
+            <div class="fi full"><label>Nombre del perfil</label><input type="text" id="prof-name" placeholder="Ej: Mi marca personal / Empresa XYZ / Newsletter Tech"/></div>
+            <div class="fi"><label>Tipo</label><select id="prof-type"><option value="marca personal">Marca personal</option><option value="empresa B2B">Empresa B2B</option><option value="empresa B2C">Empresa B2C</option><option value="newsletter / media">Newsletter / Media</option><option value="startup">Startup</option></select></div>
+            <div class="fi"><label>Industria principal</label><input type="text" id="prof-industry" placeholder="Ej: Tecnología B2B, ecommerce, fintech..."/></div>
+            <div class="fi full"><label>¿Quién sos / qué hace esta empresa? (sé específico)</label><textarea id="prof-who" rows="3" placeholder="Ej: Soy Product Manager con 8 años de experiencia en startups SaaS B2B. Actualmente en [empresa]. Trabajo con equipos de 5-15 personas. Mi especialidad es growth y pricing."></textarea></div>
+            <div class="fi full"><label>¿Cómo es tu voz y estilo de escritura?</label><textarea id="prof-voice" rows="3" placeholder="Ej: Directo y sin vueltas. Uso datos cuando puedo. Me gusta hacer preguntas que incomoden un poco. No uso jerga corporativa. Soy amigo del lector, no su jefe. Escribo como hablo."></textarea></div>
+            <div class="fi full"><label>¿Sobre qué temas tenés autoridad y experiencia real?</label><textarea id="prof-topics" rows="2" placeholder="Ej: Product management, IA aplicada a producto, metodologías ágiles, gestión de equipos remotos, pricing SaaS."></textarea></div>
+            <div class="fi full"><label>¿Qué evitás siempre en tu comunicación?</label><textarea id="prof-avoid" rows="2" placeholder="Ej: Evito el lenguaje corporativo vacío ('sinergia', 'disruption'). No exagero. No hablo de lo que no sé. No prometo lo que no puedo cumplir."></textarea></div>
+            <div class="fi full"><label>Audiencia objetivo</label><textarea id="prof-audience" rows="2" placeholder="Ej: PMs y founders de startups latinoamericanas. Entre 28-45 años. Ya conocen los conceptos básicos, buscan perspectiva y casos reales, no teoría."></textarea></div>
+          </div>
+          <div class="brow">
+            <button class="btn btn-p btn-sm" onclick="saveProfile()">Guardar perfil</button>
+            <button class="btn btn-g btn-sm" onclick="clearProfileForm()">Limpiar</button>
+          </div>
+          <div id="prof-editing" style="display:none;margin-top:8px;font-size:12px;color:var(--green)"></div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTOS -->
+      <div class="panel" id="panel-docs">
+        <div class="ptitle">Documentos de empresa</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">Subí decks, informes, guías de marca o cualquier documento. La IA extrae el texto y lo usa como contexto en cada generación.</p>
+        <div id="docs-list"></div>
+        <div class="upzone" onclick="document.getElementById('file-in').click()">
+          <input type="file" id="file-in" accept=".txt,.md,.pdf,.docx" multiple onchange="handleFiles(this)"/>
+          <div class="uico">↑</div>
+          <p>Hacé clic o arrastrá archivos<br><strong>.PDF &nbsp;·&nbsp; .DOCX &nbsp;·&nbsp; .TXT &nbsp;·&nbsp; .MD</strong><br><span style="font-size:11px;color:var(--text3)">Varios a la vez · Máx 5MB c/u</span></p>
+        </div>
+        <label style="display:block;margin-bottom:6px">O pegá texto directamente</label>
+        <textarea id="ctx-manual" rows="5" placeholder="Pegá aquí cualquier texto que quieras usar como contexto..."></textarea>
+        <div class="brow" style="margin-top:8px">
+          <button class="btn btn-p btn-sm" onclick="saveManualCtx()">Guardar texto</button>
+          <button class="btn btn-g btn-sm" onclick="clearAllDocs()">Borrar todo</button>
+        </div>
+        <div id="ctx-preview-wrap" style="display:none;margin-top:12px">
+          <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">Vista previa del contexto activo</div>
+          <div class="ctx-preview" id="ctx-preview"></div>
+        </div>
+      </div>
+
+      <!-- ESTILO -->
+      <div class="panel" id="panel-style">
+        <div class="ptitle">Muestras de estilo</div>
+        <div class="psubtitle">Pegá posts, emails o newsletters que ya publicaste y representen bien tu voz. La IA los analiza para replicar tu estilo.</div>
+        <div id="samples-list"></div>
+        <div class="sblock">
+          <h3>Agregar muestra</h3>
+          <div class="fg">
+            <div class="fi"><label>Tipo</label><select id="sample-type"><option value="post de LinkedIn">Post de LinkedIn</option><option value="email">Email</option><option value="newsletter">Newsletter</option></select></div>
+            <div class="fi"><label>Título (opcional)</label><input type="text" id="sample-title" placeholder="Ej: Post sobre IA en producto — Mayo 2024"/></div>
+            <div class="fi full"><label>Contenido completo</label><textarea id="sample-text" rows="7" placeholder="Pegá el texto completo..."></textarea></div>
+          </div>
+          <div class="brow">
+            <button class="btn btn-p btn-sm" onclick="addSample()">Agregar muestra</button>
+            <button class="btn btn-g btn-sm" onclick="analyzeStyle()">Analizar estilo ✦</button>
+            <button class="btn btn-g btn-sm" onclick="clearSamples()">Borrar muestras</button>
+          </div>
+        </div>
+        <div id="style-analysis-wrap" style="display:none">
+          <div class="sblock"><h3>Análisis de tu voz</h3><div id="style-analysis" style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div></div>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="panel" id="panel-history">
+        <div class="ptitle">Historial</div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-g btn-sm" onclick="clearHistory()">Limpiar todo</button></div>
+        <div id="history-list"></div>
+      </div>
+
+      <!-- CONFIG -->
+      <div class="panel" id="panel-config">
+        <div class="ptitle">Configuración</div>
+        <div class="sblock">
+          <h3>API Keys</h3>
+          <p>Se guardan en tu navegador. Nunca se envían a servidores externos a los propios proveedores de IA.</p>
+          <label style="display:block;margin-bottom:5px">Groq — LLaMA / Mixtral (Gratis) — <a href="https://console.groq.com/keys" target="_blank">Obtener key gratuita</a></label>
+          <div class="krow"><input type="password" id="key-groq" placeholder="gsk_..." oninput="saveKey('groq')"/><span class="ks" id="ks-groq">Sin clave</span></div>
+          <p style="font-size:12px;color:var(--green);margin-bottom:14px">✓ Groq tiene plan gratuito generoso. Ideal para empezar sin costo.</p>
+          <label style="display:block;margin-bottom:5px">Claude (Anthropic) — <a href="https://console.anthropic.com" target="_blank">Obtener key</a></label>
+          <div class="krow"><input type="password" id="key-claude" placeholder="sk-ant-..." oninput="saveKey('claude')"/><span class="ks" id="ks-claude">Sin clave</span></div>
+          <label style="display:block;margin-bottom:5px">GPT-4o + DALL-E (OpenAI) — <a href="https://platform.openai.com/api-keys" target="_blank">Obtener key</a></label>
+          <div class="krow"><input type="password" id="key-openai" placeholder="sk-..." oninput="saveKey('openai')"/><span class="ks" id="ks-openai">Sin clave</span></div>
+          <label style="display:block;margin-bottom:5px">Gemini (Google) — <a href="https://aistudio.google.com/app/apikey" target="_blank">Obtener key</a></label>
+          <div class="krow"><input type="password" id="key-gemini" placeholder="AIza..." oninput="saveKey('gemini')"/><span class="ks" id="ks-gemini">Sin clave</span></div>
+        </div>
+        <div class="sblock">
+          <h3>Preferencias</h3>
+          <div class="fi"><label>Idioma de salida del contenido generado</label>
+            <select id="pref-lang">
+              <option value="español rioplatense de Argentina (vos, che, etc.)">Español — Argentina (vos, che)</option>
+              <option value="español neutro latinoamericano">Español — Neutro latinoamericano</option>
+              <option value="español de España (tú, vosotros)">Español — España</option>
+              <option value="inglés americano">Inglés</option>
+              <option value="portugués brasileño">Portugués — Brasil</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- GUIDE -->
+      <div class="panel" id="panel-guide">
+        <div class="ptitle">Cómo sacarle el máximo</div>
+        <div class="tip-box">La diferencia entre un post genérico y uno que genera 50 comentarios está en los datos que le das a la IA, no en el modelo que uses.</div>
+        <div class="gblock"><h3>Por qué el contenido sale genérico (y cómo evitarlo)</h3>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8">La IA no sabe nada de vos. Si le decís "hablar de cómo uso Claude como PM" sin más contexto, va a inventar ejemplos vacíos. La solución es el campo <strong>"Hechos y datos reales"</strong>: contale qué pasó exactamente, con números, personas y resultados reales. Eso es lo que convierte en contenido.</p>
+        </div>
+        <div class="gblock"><h3>Flujo recomendado</h3><ol>
+          <li><strong>Creá tu perfil</strong> → "Perfiles" → Definí quién sos, tu voz y tu audiencia.</li>
+          <li><strong>Subí muestras de estilo</strong> → "Estilo" → Pegá 3-5 posts que representen tu voz real.</li>
+          <li><strong>Analizá el estilo</strong> → Clic en "Analizar estilo ✦" → La IA describe tu voz para usarla.</li>
+          <li><strong>Completá los hechos reales</strong> → El campo verde en cada formulario es el más importante.</li>
+          <li><strong>Ajustá tono, longitud y estructura</strong> → Experimentá con las variantes.</li>
+        </ol></div>
+        <div class="gblock"><h3>Perfiles separados para voces distintas</h3>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8">Sí, tu marca personal y tu empresa son voces distintas. Creá un perfil para cada una. El perfil activo aparece en la barra superior — cambialo antes de generar.</p>
+        </div>
+        <div class="gblock"><h3>Modelos gratuitos disponibles</h3>
+          <ul><li><strong>Groq:</strong> <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> — LLaMA 3.3 70B, Mixtral, Gemma. Plan gratuito.</li>
+          <li><strong>Gemini Flash Exp:</strong> tiene cuota experimental separada en Google AI Studio.</li></ul>
+        </div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /layout -->
+</div><!-- /wrap -->
+</div><!-- /main-content -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">Voxai — Content Studio</div>
+      <div class="footer-by">by <strong>Halyard Studio</strong></div>
+    </div>
+    <div class="footer-links">
+      <a href="#" onclick="document.getElementById('modal-privacy').classList.remove('hidden');return false">Política de privacidad</a>
+      <a href="#" onclick="document.getElementById('modal-terms').classList.remove('hidden');return false">Términos de uso</a>
+      <a href="https://halyard.studio" target="_blank">Halyard Studio</a>
+    </div>
+  </div>
+  <div class="footer-disclaimer">
+    <strong style="color:rgba(255,255,255,0.7)">Aviso importante:</strong> Voxai es una herramienta de asistencia para la generación de contenido mediante inteligencia artificial. El contenido generado es una sugerencia que debe ser revisada, editada y aprobada por el usuario antes de su publicación. Voxai no garantiza la precisión, originalidad ni idoneidad del contenido generado. El usuario es el único responsable del contenido que publique. Las API keys ingresadas se almacenan únicamente en el navegador local del usuario y nunca son enviadas a servidores de Halyard Studio. El uso de modelos de IA está sujeto a los términos y condiciones de cada proveedor (Anthropic, OpenAI, Google, Groq).
+  </div>
+</footer>
+
+<!-- MODAL PRIVACY -->
+<div class="modal-overlay hidden" id="modal-privacy">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-privacy').classList.add('hidden')">✕</button>
+    <h2>Política de privacidad</h2>
+    <p style="margin-bottom:12px"><strong>Última actualización:</strong> Marzo 2026</p>
+    <p><strong>Datos que recopilamos:</strong> Voxai no recopila, almacena ni transmite datos personales a ningún servidor propio. Toda la información ingresada (perfiles, documentos, historial, API keys) se almacena exclusivamente en el almacenamiento local (localStorage) de tu navegador.</p><br>
+    <p><strong>API Keys:</strong> Las claves de API se guardan en tu navegador y se envían directamente a los servidores del proveedor correspondiente (Anthropic, OpenAI, Google, Groq) al momento de generar contenido. Halyard Studio no tiene acceso a estas claves en ningún momento.</p><br>
+    <p><strong>Contenido generado:</strong> El contenido que ingresás como contexto o prompts es enviado directamente a los modelos de IA de los proveedores seleccionados. Su manejo está sujeto a las políticas de privacidad de cada proveedor.</p><br>
+    <p><strong>Cookies y tracking:</strong> Esta herramienta no utiliza cookies de seguimiento ni servicios de analítica de terceros.</p><br>
+    <p><strong>Contacto:</strong> Para consultas sobre privacidad, contactá a <a href="mailto:hola@halyard.studio">hola@halyard.studio</a></p>
+    <div class="brow" style="margin-top:16px"><button class="btn btn-p btn-sm" onclick="document.getElementById('modal-privacy').classList.add('hidden')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL TERMS -->
+<div class="modal-overlay hidden" id="modal-terms">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-terms').classList.add('hidden')">✕</button>
+    <h2>Términos de uso</h2>
+    <p style="margin-bottom:12px"><strong>Última actualización:</strong> Marzo 2026</p>
+    <p><strong>Uso permitido:</strong> Voxai está diseñado para asistir en la creación de contenido de comunicación empresarial y personal. El usuario puede usar el contenido generado para sus propios fines comerciales o personales.</p><br>
+    <p><strong>Responsabilidad del usuario:</strong> El usuario es el único responsable del contenido que publique. Debe revisar y verificar todo el contenido antes de su publicación. Voxai no se hace responsable por errores, inexactitudes o contenido inapropiado generado por los modelos de IA.</p><br>
+    <p><strong>Uso de IA:</strong> El contenido es generado por modelos de inteligencia artificial de terceros. El usuario acepta los términos de uso de los proveedores de IA que utilice (Anthropic, OpenAI, Google, Groq).</p><br>
+    <p><strong>Propiedad intelectual:</strong> Voxai no reclama derechos sobre el contenido generado. El usuario mantiene todos los derechos sobre el contenido que publique.</p><br>
+    <p><strong>Sin garantías:</strong> La herramienta se provee "tal cual" sin garantías de ningún tipo. Halyard Studio no garantiza disponibilidad continua del servicio.</p>
+    <div class="brow" style="margin-top:16px"><button class="btn btn-p btn-sm" onclick="document.getElementById('modal-terms').classList.add('hidden')">Cerrar</button></div>
+  </div>
+</div>
+
+<script>
+if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── MODELS ──
+const MODELS={
+  claude:[
+    {id:'claude-sonnet-4-5-20251001',label:'Claude Sonnet 4.5'},
+    {id:'claude-sonnet-4-20250514',label:'Claude Sonnet 4'},
+    {id:'claude-opus-4-20250514',label:'Claude Opus 4'},
+    {id:'claude-haiku-4-5-20251001',label:'Claude Haiku 4.5 (rápido)'},
+  ],
+  openai:[
+    {id:'gpt-4o',label:'GPT-4o'},
+    {id:'gpt-4o-mini',label:'GPT-4o Mini (económico)'},
+    {id:'gpt-4-turbo',label:'GPT-4 Turbo'},
+  ],
+  gemini:[
+    {id:'gemini-2.0-flash-exp',label:'Gemini 2.0 Flash Exp — cuota separada'},
+    {id:'gemini-2.0-flash-lite',label:'Gemini 2.0 Flash Lite'},
+    {id:'gemini-2.0-flash',label:'Gemini 2.0 Flash'},
+    {id:'gemini-2.0-pro-exp',label:'Gemini 2.0 Pro Exp'},
+    {id:'gemini-1.5-flash',label:'Gemini 1.5 Flash'},
+    {id:'gemini-1.5-pro',label:'Gemini 1.5 Pro'},
+  ],
+  groq:[
+    {id:'llama-3.3-70b-versatile',label:'LLaMA 3.3 70B — Gratis ✓'},
+    {id:'llama-3.1-8b-instant',label:'LLaMA 3.1 8B Instant — Gratis ✓'},
+    {id:'mixtral-8x7b-32768',label:'Mixtral 8x7B — Gratis ✓'},
+    {id:'gemma2-9b-it',label:'Gemma 2 9B — Gratis ✓'},
+  ],
+};
+const PBADGES={claude:'Anthropic',openai:'OpenAI',gemini:'Google',groq:'Groq — Gratis'};
+
+function updateSubmodels(){
+  const p=document.getElementById('gprovider').value;
+  const sel=document.getElementById('gmodel');
+  sel.innerHTML=MODELS[p].map(m=>`<option value="${m.id}">${m.label}</option>`).join('');
+  document.getElementById('provider-badge').textContent=PBADGES[p];
+  try{localStorage.setItem('cs_provider',p);}catch(e){}
+}
+
+// ── STATE ──
+let docs=[], appHistory=[], samples=[], profiles=[], editingProfileIdx=-1;
+
+function loadState(){
+  try{
+    docs=JSON.parse(localStorage.getItem('cs_docs')||'[]');
+    appHistory=JSON.parse(localStorage.getItem('cs_history')||'[]');
+    samples=JSON.parse(localStorage.getItem('cs_samples')||'[]');
+    profiles=JSON.parse(localStorage.getItem('cs_profiles')||'[]');
+    ['claude','openai','gemini','groq'].forEach(k=>{
+      const v=localStorage.getItem('cs_key_'+k)||'';
+      if(v){document.getElementById('key-'+k).value=v;updateKS(k);}
+    });
+    const savedLang=localStorage.getItem('cs_lang');
+    if(savedLang){const el=document.getElementById('pref-lang');if(el)el.value=savedLang;}
+    const savedProvider=localStorage.getItem('cs_provider');
+    if(savedProvider&&MODELS[savedProvider]){document.getElementById('gprovider').value=savedProvider;}
+    updateSubmodels();
+    const savedModel=localStorage.getItem('cs_model');
+    if(savedModel){const el=document.getElementById('gmodel');if(el){const opt=[...el.options].find(o=>o.value===savedModel);if(opt)el.value=savedModel;}}
+    renderDocs();renderSamples();renderProfiles();updateCtxPill();renderProfileSelector();
+  }catch(e){updateSubmodels();}
+}
+
+// ── PANEL NAV ──
+function showPanel(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+  if(name==='docs')renderDocs();
+  if(name==='profiles')renderProfiles();
+}
+
+// ── PROFILES ──
+function renderProfileSelector(){
+  const sel=document.getElementById('active-profile');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Sin perfil —</option>'+profiles.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('');
+  if(cur&&sel.querySelector(`option[value="${cur}"]`))sel.value=cur;
+  updateProfilePill();
+}
+
+function switchProfile(){
+  updateProfilePill();
+  updateCtxPill();
+}
+
+function updateProfilePill(){
+  const idx=document.getElementById('active-profile').value;
+  const pill=document.getElementById('profile-pill');
+  if(idx!==''){pill.textContent=profiles[idx]?.name+' activo';pill.style.display='inline-block';}
+  else{pill.style.display='none';}
+}
+
+function getActiveProfile(){
+  const idx=document.getElementById('active-profile').value;
+  return idx!==''?profiles[parseInt(idx)]:null;
+}
+
+function renderProfiles(){
+  const el=document.getElementById('profiles-list');
+  if(!profiles.length){el.innerHTML='<div class="empty" style="padding:16px 0">No hay perfiles. Creá el primero abajo.</div>';return;}
+  el.innerHTML=profiles.map((p,i)=>`
+    <div class="profile-card" id="pcard-${i}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="profile-card-name">${p.name}</div>
+          <div class="profile-card-desc">${p.type} · ${p.industry||''}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-g btn-sm" onclick="editProfile(${i})">Editar</button>
+          <button class="btn btn-g btn-sm" onclick="deleteProfile(${i})">Borrar</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function saveProfile(){
+  const name=document.getElementById('prof-name').value.trim();
+  if(!name){alert('El nombre del perfil es obligatorio.');return;}
+  const prof={
+    name,
+    type:document.getElementById('prof-type').value,
+    industry:document.getElementById('prof-industry').value.trim(),
+    who:document.getElementById('prof-who').value.trim(),
+    voice:document.getElementById('prof-voice').value.trim(),
+    topics:document.getElementById('prof-topics').value.trim(),
+    avoid:document.getElementById('prof-avoid').value.trim(),
+    audience:document.getElementById('prof-audience').value.trim(),
+  };
+  if(editingProfileIdx>=0){profiles[editingProfileIdx]=prof;}
+  else{profiles.push(prof);}
+  try{localStorage.setItem('cs_profiles',JSON.stringify(profiles));}catch(e){}
+  editingProfileIdx=-1;
+  document.getElementById('prof-editing').style.display='none';
+  clearProfileForm();
+  renderProfiles();
+  renderProfileSelector();
+  updateCtxPill();
+  alert('Perfil guardado. Seleccionalo en la barra superior para usarlo.');
+}
+
+function editProfile(idx){
+  const p=profiles[idx];
+  editingProfileIdx=idx;
+  document.getElementById('prof-name').value=p.name||'';
+  document.getElementById('prof-type').value=p.type||'marca personal';
+  document.getElementById('prof-industry').value=p.industry||'';
+  document.getElementById('prof-who').value=p.who||'';
+  document.getElementById('prof-voice').value=p.voice||'';
+  document.getElementById('prof-topics').value=p.topics||'';
+  document.getElementById('prof-avoid').value=p.avoid||'';
+  document.getElementById('prof-audience').value=p.audience||'';
+  const ed=document.getElementById('prof-editing');
+  ed.style.display='block';ed.textContent='Editando: '+p.name;
+  document.querySelector('.sblock').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteProfile(idx){
+  if(!confirm('¿Borrar el perfil "'+profiles[idx].name+'"?'))return;
+  profiles.splice(idx,1);
+  try{localStorage.setItem('cs_profiles',JSON.stringify(profiles));}catch(e){}
+  renderProfiles();renderProfileSelector();updateCtxPill();
+}
+
+function clearProfileForm(){
+  ['prof-name','prof-industry','prof-who','prof-voice','prof-topics','prof-avoid','prof-audience'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('prof-type').value='marca personal';
+  editingProfileIdx=-1;
+  document.getElementById('prof-editing').style.display='none';
+}
+
+function getProfileContext(){
+  const p=getActiveProfile();
+  if(!p)return'';
+  let ctx=`PERFIL / VOZ ACTIVA:\nNombre: ${p.name}\nTipo: ${p.type}`;
+  if(p.industry)ctx+=`\nIndustria: ${p.industry}`;
+  if(p.who)ctx+=`\nQuién es / qué hace: ${p.who}`;
+  if(p.voice)ctx+=`\nEstilo y voz de escritura: ${p.voice}`;
+  if(p.topics)ctx+=`\nTemas de autoridad: ${p.topics}`;
+  if(p.avoid)ctx+=`\nEvitar siempre: ${p.avoid}`;
+  if(p.audience)ctx+=`\nAudiencia: ${p.audience}`;
+  return ctx;
+}
+
+// ── DOCS ──
+function getContext(){return docs.map(d=>'['+d.name+']\n'+d.text).join('\n\n---\n\n').substring(0,3000);}
+
+function getStyleContext(){
+  if(!samples.length)return'';
+  return'EJEMPLOS DE ESTILO Y VOZ (replicá este estilo — estructura, tono, vocabulario, ritmo):\n\n'+
+    samples.map((s,i)=>`Ejemplo ${i+1} (${s.type}${s.title?' — '+s.title:''}):\n${s.text}`).join('\n\n---\n\n').substring(0,3000);
+}
+
+function getFullContext(){
+  const parts=[];
+  const p=getProfileContext();if(p)parts.push(p);
+  const d=getContext();if(d)parts.push('DOCUMENTOS DE EMPRESA:\n'+d);
+  const s=getStyleContext();if(s)parts.push(s);
+  return parts.join('\n\n===\n\n');
+}
+
+function updateCtxPill(){
+  const pill=document.getElementById('ctx-pill');
+  const parts=[];
+  const prof=getActiveProfile();
+  if(prof)parts.push('Perfil: '+prof.name);
+  if(docs.length)parts.push(docs.length+' doc'+(docs.length>1?'s':''));
+  if(samples.length)parts.push(samples.length+' muestra'+(samples.length>1?'s':''));
+  if(parts.length){pill.textContent=parts.join(' · ');pill.className='ctx-pill on';}
+  else{pill.textContent='Sin contexto cargado';pill.className='ctx-pill';}
+}
+
+async function handleFiles(input){
+  for(const f of Array.from(input.files)){
+    if(f.size>5*1024*1024){alert(f.name+' supera 5MB.');continue;}
+    try{
+      let text='';
+      if(f.name.toLowerCase().endsWith('.pdf'))text=await readPDF(f);
+      else if(f.name.toLowerCase().endsWith('.docx'))text=await readDOCX(f);
+      else text=await f.text();
+      docs.push({name:f.name,text:text.replace(/\s+/g,' ').trim().substring(0,5000),size:f.size});
+      saveDocs();
+    }catch(e){alert('No se pudo leer '+f.name);}
+  }
+  renderDocs();updateCtxPill();input.value='';
+}
+
+async function readPDF(file){
+  const ab=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let text='';
+  for(let i=1;i<=Math.min(pdf.numPages,20);i++){const page=await pdf.getPage(i);const c=await page.getTextContent();text+=c.items.map(s=>s.str).join(' ')+' ';}
+  return text;
+}
+async function readDOCX(file){const ab=await file.arrayBuffer();const r=await mammoth.extractRawText({arrayBuffer:ab});return r.value;}
+
+function saveManualCtx(){
+  const text=document.getElementById('ctx-manual').value.trim();
+  if(!text){alert('El campo está vacío.');return;}
+  docs.push({name:'Texto manual',text:text.substring(0,5000),size:text.length});
+  saveDocs();renderDocs();updateCtxPill();
+  document.getElementById('ctx-manual').value='';alert('Texto guardado.');
+}
+
+function removeDoc(idx){docs.splice(idx,1);saveDocs();renderDocs();updateCtxPill();}
+function clearAllDocs(){if(!confirm('¿Borrar todo?'))return;docs=[];saveDocs();renderDocs();updateCtxPill();}
+
+function saveDocs(){
+  try{localStorage.setItem('cs_docs',JSON.stringify(docs));}catch(e){}
+  const ctx=getContext();
+  const wrap=document.getElementById('ctx-preview-wrap');
+  const pre=document.getElementById('ctx-preview');
+  if(ctx){wrap.style.display='block';pre.textContent=ctx.substring(0,400)+(ctx.length>400?'…':'');}
+  else{wrap.style.display='none';}
+}
+
+function renderDocs(){
+  const el=document.getElementById('docs-list');
+  if(!docs.length){el.innerHTML='<div style="font-size:12px;color:var(--text2);padding:4px 0 10px">No hay documentos cargados.</div>';return;}
+  el.innerHTML=docs.map((d,i)=>`<div class="doc-item"><div><div class="doc-name">${d.name}</div><div class="doc-meta">${(d.size/1024).toFixed(1)} KB · ${d.text.length} chars</div></div><button class="doc-rm" onclick="removeDoc(${i})">✕</button></div>`).join('');
+  saveDocs();
+}
+
+// ── SAMPLES ──
+function addSample(){
+  const text=document.getElementById('sample-text').value.trim();
+  if(!text){alert('El campo de contenido está vacío.');return;}
+  samples.push({type:document.getElementById('sample-type').value,title:document.getElementById('sample-title').value.trim(),text:text.substring(0,2500),addedAt:new Date().toLocaleDateString('es-AR')});
+  try{localStorage.setItem('cs_samples',JSON.stringify(samples));}catch(e){}
+  renderSamples();updateCtxPill();
+  document.getElementById('sample-text').value='';document.getElementById('sample-title').value='';
+}
+
+function removeSample(idx){samples.splice(idx,1);try{localStorage.setItem('cs_samples',JSON.stringify(samples));}catch(e){}renderSamples();updateCtxPill();}
+function clearSamples(){if(!confirm('¿Borrar muestras?'))return;samples=[];try{localStorage.setItem('cs_samples',JSON.stringify(samples));}catch(e){}renderSamples();updateCtxPill();document.getElementById('style-analysis-wrap').style.display='none';}
+
+function renderSamples(){
+  const el=document.getElementById('samples-list');
+  if(!samples.length){el.innerHTML='<div style="font-size:12px;color:var(--text2);padding:4px 0 12px">No hay muestras cargadas.</div>';return;}
+  el.innerHTML='<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">'+samples.length+' muestras cargadas</div>'+
+    samples.map((s,i)=>`<div class="doc-item" style="align-items:flex-start"><div style="flex:1;min-width:0"><div class="doc-name">${s.title||s.type}</div><div class="doc-meta">${s.type} · ${s.addedAt}</div></div><button class="doc-rm" onclick="removeSample(${i})">✕</button></div>`).join('');
+}
+
+async function analyzeStyle(){
+  if(!samples.length){alert('Primero agregá al menos una muestra.');return;}
+  const model=document.getElementById('gmodel').value;
+  const lang=getLang();
+  const el=document.getElementById('style-analysis');
+  document.getElementById('style-analysis-wrap').style.display='block';
+  el.textContent='Analizando tu estilo...';
+  const samplesText=samples.map((s,i)=>`Muestra ${i+1} (${s.type}):\n${s.text}`).join('\n\n---\n\n');
+  const prompt=`Analizá el estilo de escritura de estos ejemplos. Identificá:\n1. Tono y voz\n2. Estructura típica\n3. Longitud y ritmo\n4. Vocabulario característico\n5. Cómo abre y cierra\n6. Qué evita\n7. Cómo genera engagement\n\nSé específico. Usá ejemplos textuales. Respondé en ${lang}.\n\n${samplesText.substring(0,3000)}`;
+  try{const r=await callLLM(model,prompt,600);el.textContent=r.trim();}
+  catch(err){el.textContent='Error: '+err.message;}
+}
+
+// ── KEYS ──
+function saveKey(p){
+  const v=document.getElementById('key-'+p).value.trim();
+  try{localStorage.setItem('cs_key_'+p,v);}catch(e){}
+  updateKS(p);
+}
+function updateKS(p){
+  const v=document.getElementById('key-'+p).value.trim();
+  const el=document.getElementById('ks-'+p);
+  if(v.length>8){el.textContent='Lista ✓';el.className='ks ok';}else{el.textContent='Sin clave';el.className='ks';}
+}
+
+// ── HELPERS ──
+function getLang(){
+  const el=document.getElementById('pref-lang');
+  const v=el?el.value:'español rioplatense de Argentina';
+  try{localStorage.setItem('cs_lang',v);}catch(e){}
+  return v;
+}
+function upcc(id,v){document.getElementById(id).textContent=v.length+' caracteres';}
+function clearR(p){document.getElementById(p+'-results').innerHTML='';}
+
+// ── LLM CALL ──
+async function callLLM(model,prompt,maxTokens){
+  const provider=document.getElementById('gprovider').value;
+  try{localStorage.setItem('cs_model',model);}catch(e){}
+  if(provider==='claude'){
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    return d.content?.map(b=>b.text||'').join('')||'';
+  }else if(provider==='openai'){
+    const key=localStorage.getItem('cs_key_openai')||'';if(!key)throw new Error('Necesitás key de OpenAI. Andá a Config.');
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    return d.choices?.[0]?.message?.content||'';
+  }else if(provider==='gemini'){
+    const key=localStorage.getItem('cs_key_gemini')||'';if(!key)throw new Error('Necesitás key de Gemini. Andá a Config.');
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  }else if(provider==='groq'){
+    const key=localStorage.getItem('cs_key_groq')||'';if(!key)throw new Error('Necesitás key de Groq. Andá a Config. Es gratis en console.groq.com');
+    const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
+    return d.choices?.[0]?.message?.content||'';
+  }
+  return'';
+}
+
+// ── GENERATE ──
+async function generate(type){
+  const p={linkedin:'li',email:'em',newsletter:'nl'}[type];
+  const facts=document.getElementById(p+'-facts').value.trim();
+  const model=document.getElementById('gmodel').value;
+  const modelLabel=document.getElementById('gmodel').selectedOptions[0]?.text||model;
+  const lang=getLang();
+  const variants=parseInt(document.getElementById(p+'-var').value);
+  const typeLabel={linkedin:'post de LinkedIn',email:'email de mailing',newsletter:'newsletter'}[type];
+
+  let extra='';
+  if(type==='linkedin'){
+    extra=`Tono: ${document.getElementById('li-tone').value}.
+Objetivo: ${document.getElementById('li-goal').value}.
+Longitud: ${document.getElementById('li-len').value}.
+Profundidad: ${document.getElementById('li-depth').value}.
+Estructura: ${document.getElementById('li-struct').value}.
+Emojis: ${document.getElementById('li-emoji').value}.
+Hashtags: ${document.getElementById('li-hash').value}.
+IMPORTANTE: Usá los hechos y datos reales provistos. NO inventes datos, ejemplos ni estadísticas que no estén en el input. Sé específico y concreto. Evitá frases genéricas y corporativas vacías.`;
+    const ei=document.getElementById('li-extra').value.trim();if(ei)extra+='\nInstrucciones adicionales: '+ei;
+  }else if(type==='email'){
+    extra=`Tono: ${document.getElementById('em-tone').value}.
+Tipo: ${document.getElementById('em-type').value}.
+Longitud: ${document.getElementById('em-len').value}.
+Personalización: ${document.getElementById('em-pers').value}.
+Incluir: Asunto atractivo, Preheader (máx 80 chars), Cuerpo con CTA claro.`;
+    const ei=document.getElementById('em-extra').value.trim();if(ei)extra+='\nInstrucciones adicionales: '+ei;
+  }else{
+    extra=`Tono: ${document.getElementById('nl-tone').value}.
+Estructura: ${document.getElementById('nl-struct').value}.
+Extensión: ${document.getElementById('nl-len').value}.
+Profundidad: ${document.getElementById('nl-depth').value}.`;
+    const ei=document.getElementById('nl-extra').value.trim();if(ei)extra+='\nInstrucciones adicionales: '+ei;
+  }
+
+  const ctx=getFullContext();
+  const ctxBlock=ctx?'\n\n'+ctx:'';
+  const factsBlock=facts?'\n\nHECHOS Y DATOS REALES PARA EL CONTENIDO (usá estos datos, no los ignores):\n'+facts:'';
+
+  const prompt=`Sos un experto copywriter. Tu trabajo es transformar hechos reales en contenido auténtico, específico y que genere impacto.${ctxBlock}${factsBlock}
+
+TAREA: Generá exactamente ${variants} versión(es) diferentes de un ${typeLabel}.
+
+${extra}
+
+REGLAS CRÍTICAS:
+- Usá SOLO los hechos, datos y ejemplos provistos. No inventes nada que no esté en el input.
+- Sé específico y concreto. "Reducimos el tiempo de PRD un 80%" es mejor que "mejoramos la eficiencia".
+- Evitá frases vacías: "en el mundo actual", "es fundamental", "sin duda", "sinergia", "disruptivo".
+- El primer gancho debe ser imposible de ignorar.
+- El contenido debe sonar como lo escribió una persona real, no una IA.
+
+Idioma: ${lang}.
+Separar cada versión con "--- VERSIÓN X ---". Sin texto antes de la primera versión.`;
+
+  const btn=document.getElementById(p+'-btn'),lb=document.getElementById(p+'-lb'),lm=document.getElementById(p+'-lm'),res=document.getElementById(p+'-results');
+  btn.disabled=true;lb.classList.add('on');lm.textContent='Generando con '+modelLabel+'...';res.innerHTML='';
+
+  try{
+    const txt=await callLLM(model,prompt,3000);
+    const parts=txt.split(/---\s*VERSIÓN\s*\d+\s*---/i).map(s=>s.trim()).filter(Boolean);
+    if(!parts.length){res.innerHTML='<div style="padding:10px;font-size:13px;color:var(--text2)">No se pudo generar. Verificá tu API key y el modelo seleccionado.</div>';}
+    else{
+      res.innerHTML=renderVariants(parts,modelLabel,type);
+      const now=new Date();
+      appHistory.push({type,typeLabel,model:modelLabel,variants:parts,facts,time:now.toLocaleDateString('es-AR')+' '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),preview:parts[0]?.substring(0,130)+'...'});
+      try{localStorage.setItem('cs_history',JSON.stringify(appHistory.slice(-50)));}catch(e){}
+    }
+  }catch(err){res.innerHTML='<div style="padding:10px;font-size:13px;color:var(--text2)">Error: '+err.message+'</div>';}
+  btn.disabled=false;lb.classList.remove('on');
+}
+
+function renderVariants(parts,modelLabel,type){
+  return parts.map((text,i)=>`
+    <div class="vc">
+      <div class="vh">
+        <span class="vlabel">VERSIÓN ${i+1}</span>
+        <div class="vacts">
+          <span class="badge">${modelLabel}</span>
+          <button class="btn btn-g btn-sm" onclick="toggleEdit(this,'vt-${type}-${i}')">Editar</button>
+          <button class="btn btn-g btn-sm" onclick="regen(this,'${type}',${i})">↺ Regenerar</button>
+          <button class="btn btn-sm" onclick="copyTxt('vt-${type}-${i}',this)">Copiar</button>
+        </div>
+      </div>
+      <div class="vbody"><div class="vtext" id="vt-${type}-${i}">${text}</div></div>
+      <div class="img-section">
+        <div class="img-head">
+          <span>Imagen para este post</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-g btn-sm" onclick="loadImgPrompt('${type}',${i})">Sugerir prompt ✦</button>
+            <button class="btn btn-g btn-sm" id="igbtn-${type}-${i}" onclick="genImage('${type}',${i})">Generar imagen</button>
+            <button class="btn btn-g btn-sm" onclick="openDalle('${type}',${i})">Abrir en DALL-E ↗</button>
+          </div>
+        </div>
+        <div class="img-body">
+          <textarea class="prompt-edit" id="ip-${type}-${i}" placeholder="Clic en 'Sugerir prompt' o escribí tu descripción para DALL-E."></textarea>
+          <div id="imgw-${type}-${i}"><div class="img-placeholder">La imagen aparecerá acá.<br>Necesitás key de OpenAI para generarla directamente.</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── IMAGE ──
+async function loadImgPrompt(type,idx){
+  const textEl=document.getElementById('vt-'+type+'-'+idx);
+  const promptEl=document.getElementById('ip-'+type+'-'+idx);
+  if(!textEl||!promptEl)return;
+  promptEl.value='Generando sugerencia...';
+  const model=document.getElementById('gmodel').value;
+  const p='Based on this content, write a concise image generation prompt in English for DALL-E 3. Professional, visually compelling, suitable for social media. No text in the image. Return only the prompt.\n\nContent:\n'+textEl.innerText.substring(0,600);
+  try{const s=await callLLM(model,p,120);promptEl.value=s.trim();}
+  catch(e){promptEl.value='Professional business illustration, clean modern style, suitable for LinkedIn';}
+}
+
+async function genImage(type,idx){
+  const promptEl=document.getElementById('ip-'+type+'-'+idx);
+  const btn=document.getElementById('igbtn-'+type+'-'+idx);
+  const wrap=document.getElementById('imgw-'+type+'-'+idx);
+  if(!promptEl.value.trim()){alert('Primero generá o escribí un prompt.');return;}
+  const key=localStorage.getItem('cs_key_openai')||'';
+  if(!key){alert('Necesitás key de OpenAI para generar imágenes. Andá a Config.');return;}
+  const orig=btn.textContent;btn.disabled=true;btn.textContent='Generando...';
+  wrap.innerHTML='<div class="img-placeholder">Generando con DALL-E 3...</div>';
+  try{
+    const r=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'dall-e-3',prompt:promptEl.value,n:1,size:'1024x1024',quality:'standard'})});
+    const d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    const url=d.data?.[0]?.url;
+    if(url)wrap.innerHTML='<div class="img-wrap"><img src="'+url+'" alt="Imagen generada"/></div><div style="font-size:11px;color:var(--text2);margin-top:6px;text-align:center">Clic derecho → Guardar imagen</div>';
+    else wrap.innerHTML='<div class="img-placeholder">No se pudo obtener la imagen.</div>';
+  }catch(err){wrap.innerHTML='<div class="img-placeholder">Error: '+err.message+'</div>';}
+  btn.disabled=false;btn.textContent=orig;
+}
+
+function openDalle(type,idx){
+  const p=document.getElementById('ip-'+type+'-'+idx)?.value?.trim()||'';
+  if(p){
+    navigator.clipboard.writeText(p).then(()=>{
+      alert('✓ Prompt copiado al portapapeles.\n\nAbriremos DALL-E — pegalo (Ctrl+V / Cmd+V) en el campo de texto.');
+    }).catch(()=>{});
+  }
+  window.open('https://chatgpt.com/dall-e','_blank');
+}
+
+// ── EDIT / COPY / REGEN ──
+function toggleEdit(btn,id){
+  const el=document.getElementById(id);const e=el.contentEditable==='true';
+  el.contentEditable=e?'false':'true';btn.textContent=e?'Editar':'Listo';if(!e)el.focus();
+}
+
+function copyTxt(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{
+    const o=btn.textContent;btn.textContent='Copiado ✓';setTimeout(()=>btn.textContent=o,1600);
+  });
+}
+
+async function regen(btn,type,idx){
+  const p={linkedin:'li',email:'em',newsletter:'nl'}[type];
+  const facts=document.getElementById(p+'-facts')?.value?.trim()||'';
+  const model=document.getElementById('gmodel').value;
+  const lang=getLang();
+  const typeLabel={linkedin:'post de LinkedIn',email:'email',newsletter:'newsletter'}[type];
+  const ctx=getFullContext();
+  const ctxBlock=ctx?'\n\n'+ctx:'';
+  const factsBlock=facts?'\n\nHECHOS Y DATOS:\n'+facts:'';
+  let extra='';
+  if(type==='linkedin')extra='Tono: '+document.getElementById('li-tone').value+'. Estructura: '+document.getElementById('li-struct').value+'. Longitud: '+document.getElementById('li-len').value+'. NO inventes datos.';
+  else if(type==='email')extra='Tipo: '+document.getElementById('em-type').value+'. Tono: '+document.getElementById('em-tone').value+'. Con asunto, preheader y CTA.';
+  else extra='Estructura: '+document.getElementById('nl-struct').value+'. Tono: '+document.getElementById('nl-tone').value+'. Extensión: '+document.getElementById('nl-len').value;
+  const prompt='Generá UNA versión nueva, diferente y mejor de un '+typeLabel+'.'+ctxBlock+factsBlock+'\n\n'+extra+'\nIdioma: '+lang+'.\nSolo el contenido, sin encabezados ni explicaciones.';
+  const el=document.getElementById('vt-'+type+'-'+idx);
+  const orig=btn.textContent;btn.textContent='...';btn.disabled=true;el.style.opacity='.4';
+  try{const txt=await callLLM(model,prompt,1200);el.textContent=txt.trim()||'Error al regenerar.';}
+  catch(e){el.textContent='Error: '+e.message;}
+  el.style.opacity='1';btn.textContent=orig;btn.disabled=false;
+}
+
+// ── HISTORY ──
+function renderHistory(){
+  const el=document.getElementById('history-list');
+  if(!appHistory.length){el.innerHTML='<div class="empty">Todavía no generaste contenido.</div>';return;}
+  el.innerHTML=[...appHistory].reverse().map((h,i)=>`
+    <div class="hi" onclick="restoreHistory(${appHistory.length-1-i})">
+      <div class="hdot ${h.type}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="hmeta">${h.typeLabel} &middot; ${h.model} &middot; ${h.time}</div>
+        <div class="hprev">${h.preview}</div>
+      </div>
+    </div>`).join('');
+}
+
+function restoreHistory(idx){
+  const h=appHistory[idx];
+  const nav=document.querySelectorAll('.nb');
+  showPanel(h.type,nav[{linkedin:0,email:1,newsletter:2}[h.type]]);
+  const p={linkedin:'li',email:'em',newsletter:'nl'}[h.type];
+  document.getElementById(p+'-results').innerHTML=renderVariants(h.variants,h.model,h.type);
+  if(h.facts&&document.getElementById(p+'-facts'))document.getElementById(p+'-facts').value=h.facts;
+}
+
+function clearHistory(){if(!confirm('¿Borrar historial?'))return;appHistory=[];try{localStorage.removeItem('cs_history');}catch(e){}renderHistory();}
+
+// ── INIT ──
+loadState();
+</script>
+</body>
+</html>
